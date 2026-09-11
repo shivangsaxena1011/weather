@@ -1,0 +1,19 @@
+// Placeholder Lottie JSON animation (minimal valid structure)
+// In production, replace with real Lottie JSON from lottiefiles.com
+// Suggested free animations:
+//   - Weather: https://lottiefiles.com/search?q=weather
+//   - Rain:    https://lottiefiles.com/search?q=rain
+//   - Sun:     https://lottiefiles.com/search?q=sunny
+{
+  "v": "5.5.7",
+  "meta": { "g": "LottieFiles AE 3.5.7", "a": "", "k": "", "d": "Weather placeholder", "tc": "" },
+  "fr": 30,
+  "ip": 0,
+  "op": 60,
+  "w": 200,
+  "h": 200,
+  "nm": "weather_placeholder",
+  "ddd": 0,
+  "assets": [],
+  "layers": []
+}
