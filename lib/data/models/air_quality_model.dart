@@ -51,4 +51,30 @@ class AirQualityModel {
       uvIndex: (current['uv_index'] as num? ?? 0).toDouble(),
     );
   }
+
+  Map<String, dynamic> toCacheJson() => {
+        'aqi': aqi,
+        'pm25': pm25,
+        'pm10': pm10,
+        'no2': no2,
+        'o3': o3,
+        'grassPollen': grassPollen,
+        'treePollen': treePollen,
+        'weedPollen': weedPollen,
+        'uvIndex': uvIndex,
+      };
+
+  factory AirQualityModel.fromCacheJson(Map<String, dynamic> json) {
+    return AirQualityModel(
+      aqi: (json['aqi'] as num? ?? 0).toInt(),
+      pm25: (json['pm25'] as num? ?? 0).toDouble(),
+      pm10: (json['pm10'] as num? ?? 0).toDouble(),
+      no2: (json['no2'] as num? ?? 0).toDouble(),
+      o3: (json['o3'] as num? ?? 0).toDouble(),
+      grassPollen: (json['grassPollen'] as num? ?? 0).toDouble(),
+      treePollen: (json['treePollen'] as num? ?? 0).toDouble(),
+      weedPollen: (json['weedPollen'] as num? ?? 0).toDouble(),
+      uvIndex: (json['uvIndex'] as num? ?? 0).toDouble(),
+    );
+  }
 }

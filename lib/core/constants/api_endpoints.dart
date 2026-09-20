@@ -7,6 +7,8 @@ class ApiEndpoints {
   static const String marineBase = 'https://marine-api.open-meteo.com/v1/marine';
   static const String geocodingBase =
       'https://geocoding-api.open-meteo.com/v1/search';
+  static const String archiveBase =
+      'https://archive-api.open-meteo.com/v1/archive';
   static const String nominatimReverse =
       'https://nominatim.openstreetmap.org/reverse';
 }

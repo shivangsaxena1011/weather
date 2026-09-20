@@ -44,7 +44,19 @@ class HourlyWeather {
       visibility: (json['visibility'] as num? ?? 10000).toDouble(),
       uvIndex: (json['uv_index'] as num? ?? 0).toDouble(),
     );
-  }
+  Map<String, dynamic> toJson() => {
+        'time': time.toIso8601String(),
+        'temperature_2m': temperature,
+        'apparent_temperature': feelsLike,
+        'precipitation_probability': precipitationProbability,
+        'precipitation': precipitation,
+        'wind_speed_10m': windSpeed,
+        'wind_direction_10m': windDirection,
+        'weather_code': weatherCode,
+        'relative_humidity_2m': humidity,
+        'visibility': visibility,
+        'uv_index': uvIndex,
+      };
 }
 
 /// Represents daily weather data for a single day.
@@ -95,6 +107,21 @@ class DailyWeather {
       soilMoisture: (json['soil_moisture_0_to_10cm'] as num? ?? 30).toDouble(),
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'date': date.toIso8601String(),
+        'temperature_2m_min': tempMin,
+        'temperature_2m_max': tempMax,
+        'precipitation_sum': precipitationSum,
+        'precipitation_probability_max': precipitationProbabilityMax,
+        'wind_speed_10m_max': windSpeedMax,
+        'weather_code': weatherCode,
+        'sunrise': sunrise.toIso8601String(),
+        'sunset': sunset.toIso8601String(),
+        'uv_index_max': uvIndexMax,
+        'et0_fao_evapotranspiration': et0FaoEvapotranspiration,
+        'soil_moisture_0_to_10cm': soilMoisture,
+      };
 }
 
 /// Top-level weather model with current conditions + hourly + daily.
@@ -258,6 +285,51 @@ class WeatherModel {
       dewPoint: (current['dew_point_2m'] as num? ?? 0).toDouble(),
       hourly: hourly,
       daily: daily,
+    );
+  }
+
+  Map<String, dynamic> toCacheJson() => {
+        'cityName': cityName,
+        'latitude': latitude,
+        'longitude': longitude,
+        'currentTemp': currentTemp,
+        'feelsLike': feelsLike,
+        'humidity': humidity,
+        'windSpeed': windSpeed,
+        'windDirection': windDirection,
+        'weatherCode': weatherCode,
+        'precipitation': precipitation,
+        'precipitationProbability': precipitationProbability,
+        'visibility': visibility,
+        'uvIndex': uvIndex,
+        'dewPoint': dewPoint,
+        'hourly': hourly.map((h) => h.toJson()).toList(),
+        'daily': daily.map((d) => d.toJson()).toList(),
+      };
+
+  factory WeatherModel.fromCacheJson(Map<String, dynamic> json) {
+    return WeatherModel(
+      cityName: json['cityName'] as String? ?? 'Unknown',
+      latitude: (json['latitude'] as num? ?? 0).toDouble(),
+      longitude: (json['longitude'] as num? ?? 0).toDouble(),
+      currentTemp: (json['currentTemp'] as num? ?? 0).toDouble(),
+      feelsLike: (json['feelsLike'] as num? ?? 0).toDouble(),
+      humidity: (json['humidity'] as num? ?? 0).toDouble(),
+      windSpeed: (json['windSpeed'] as num? ?? 0).toDouble(),
+      windDirection: (json['windDirection'] as num? ?? 0).toDouble(),
+      weatherCode: (json['weatherCode'] as num? ?? 0).toInt(),
+      precipitation: (json['precipitation'] as num? ?? 0).toDouble(),
+      precipitationProbability:
+          (json['precipitationProbability'] as num? ?? 0).toDouble(),
+      visibility: (json['visibility'] as num? ?? 10000).toDouble(),
+      uvIndex: (json['uvIndex'] as num? ?? 0).toDouble(),
+      dewPoint: (json['dewPoint'] as num? ?? 0).toDouble(),
+      hourly: ((json['hourly'] as List<dynamic>?) ?? [])
+          .map((h) => HourlyWeather.fromJson(h as Map<String, dynamic>))
+          .toList(),
+      daily: ((json['daily'] as List<dynamic>?) ?? [])
+          .map((d) => DailyWeather.fromJson(d as Map<String, dynamic>))
+          .toList(),
     );
   }
 }

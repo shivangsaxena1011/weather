@@ -62,4 +62,32 @@ class MarineModel {
           : now.add(const Duration(hours: 9)),
     );
   }
+
+  Map<String, dynamic> toCacheJson() => {
+        'waveHeight': waveHeight,
+        'wavePeriod': wavePeriod,
+        'waveDirection': waveDirection,
+        'swellWaveHeight': swellWaveHeight,
+        'swellWaveDirection': swellWaveDirection,
+        'seaTemperature': seaTemperature,
+        'nextHighTideHeight': nextHighTideHeight,
+        'nextHighTideTime': nextHighTideTime.toIso8601String(),
+        'nextLowTideHeight': nextLowTideHeight,
+        'nextLowTideTime': nextLowTideTime.toIso8601String(),
+      };
+
+  factory MarineModel.fromCacheJson(Map<String, dynamic> json) {
+    return MarineModel(
+      waveHeight: (json['waveHeight'] as num? ?? 0).toDouble(),
+      wavePeriod: (json['wavePeriod'] as num? ?? 0).toDouble(),
+      waveDirection: (json['waveDirection'] as num? ?? 0).toDouble(),
+      swellWaveHeight: (json['swellWaveHeight'] as num? ?? 0).toDouble(),
+      swellWaveDirection: (json['swellWaveDirection'] as num? ?? 0).toDouble(),
+      seaTemperature: (json['seaTemperature'] as num? ?? 0).toDouble(),
+      nextHighTideHeight: (json['nextHighTideHeight'] as num? ?? 1.5).toDouble(),
+      nextHighTideTime: DateTime.parse(json['nextHighTideTime'] as String),
+      nextLowTideHeight: (json['nextLowTideHeight'] as num? ?? 0.3).toDouble(),
+      nextLowTideTime: DateTime.parse(json['nextLowTideTime'] as String),
+    );
+  }
 }

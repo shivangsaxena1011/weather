@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:intl/intl.dart';
 import '../../core/constants/api_endpoints.dart';
 import '../models/weather_model.dart';
 import '../models/air_quality_model.dart';
@@ -6,7 +7,6 @@ import '../models/marine_model.dart';
 
 class OpenMeteoService {
   final Dio _dio;
-  static const Duration _pacingDelay = Duration(milliseconds: 1200);
   static const Duration _cacheTtl = Duration(minutes: 15);
 
   final Map<String, (DateTime, dynamic)> _cache = {};
@@ -32,12 +32,8 @@ class OpenMeteoService {
     final cacheKey = 'weather_${latitude.toStringAsFixed(2)}_${longitude.toStringAsFixed(2)}';
     final cached = _cache[cacheKey];
     if (cached != null && DateTime.now().difference(cached.$1) < _cacheTtl) {
-      await Future.delayed(const Duration(milliseconds: 300));
       return cached.$2 as WeatherModel;
     }
-
-    // Pacing delay to reduce server load ("laggy" pacing)
-    await Future.delayed(_pacingDelay);
 
     try {
       final response = await _dio.get(
@@ -132,8 +128,6 @@ class OpenMeteoService {
       return cached.$2 as AirQualityModel;
     }
 
-    await Future.delayed(const Duration(milliseconds: 300));
-
     try {
       final response = await _dio.get(
         ApiEndpoints.airQualityBase,
@@ -173,8 +167,6 @@ class OpenMeteoService {
       return cached.$2 as MarineModel;
     }
 
-    await Future.delayed(const Duration(milliseconds: 300));
-
     try {
       final response = await _dio.get(
         ApiEndpoints.marineBase,
@@ -197,6 +189,89 @@ class OpenMeteoService {
       return model;
     } catch (e) {
       return MarineModel.mock();
+    }
+  }
+
+  /// Fetches historical daily weather records from Open-Meteo Archive API.
+  Future<List<DailyWeather>> fetchHistoricalDaily({
+    required double latitude,
+    required double longitude,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    final startStr = DateFormat('yyyy-MM-dd').format(startDate);
+    final endStr = DateFormat('yyyy-MM-dd').format(endDate);
+    final cacheKey =
+        'hist_${latitude.toStringAsFixed(2)}_${longitude.toStringAsFixed(2)}_${startStr}_$endStr';
+    final cached = _cache[cacheKey];
+    if (cached != null && DateTime.now().difference(cached.$1) < _cacheTtl) {
+      return cached.$2 as List<DailyWeather>;
+    }
+
+    try {
+      final response = await _dio.get(
+        ApiEndpoints.archiveBase,
+        queryParameters: {
+          'latitude': latitude,
+          'longitude': longitude,
+          'start_date': startStr,
+          'end_date': endStr,
+          'daily': [
+            'temperature_2m_max',
+            'temperature_2m_min',
+            'precipitation_sum',
+            'wind_speed_10m_max',
+            'weather_code',
+          ].join(','),
+          'timezone': 'auto',
+        },
+      );
+
+      final data = Map<String, dynamic>.from(response.data as Map);
+      final dailyRaw = data['daily'] as Map<String, dynamic>? ?? {};
+      final times = (dailyRaw['time'] as List<dynamic>? ?? []).cast<String>();
+
+      final list = List.generate(times.length, (i) {
+        final date = DateTime.parse(times[i]);
+        return DailyWeather(
+          date: date,
+          tempMin: (dailyRaw['temperature_2m_min']?[i] as num? ?? 0).toDouble(),
+          tempMax: (dailyRaw['temperature_2m_max']?[i] as num? ?? 0).toDouble(),
+          precipitationSum:
+              (dailyRaw['precipitation_sum']?[i] as num? ?? 0).toDouble(),
+          precipitationProbabilityMax: 0,
+          windSpeedMax:
+              (dailyRaw['wind_speed_10m_max']?[i] as num? ?? 0).toDouble(),
+          weatherCode: (dailyRaw['weather_code']?[i] as num? ?? 0).toInt(),
+          sunrise: DateTime(date.year, date.month, date.day, 6, 0),
+          sunset: DateTime(date.year, date.month, date.day, 18, 0),
+          uvIndexMax: 5.0,
+          et0FaoEvapotranspiration: 3.5,
+          soilMoisture: 30.0,
+        );
+      });
+
+      _cache[cacheKey] = (DateTime.now(), list);
+      return list;
+    } catch (e) {
+      final daysCount = endDate.difference(startDate).inDays + 1;
+      return List.generate(daysCount, (i) {
+        final d = startDate.add(Duration(days: i));
+        return DailyWeather(
+          date: d,
+          tempMin: 18.0 + (i % 4),
+          tempMax: 29.0 + (i % 5),
+          precipitationSum: (i % 5 == 0) ? 4.0 : 0.0,
+          precipitationProbabilityMax: (i % 5 == 0) ? 60 : 10,
+          windSpeedMax: 14.0 + (i % 3),
+          weatherCode: (i % 5 == 0) ? 61 : 1,
+          sunrise: DateTime(d.year, d.month, d.day, 6, 0),
+          sunset: DateTime(d.year, d.month, d.day, 18, 0),
+          uvIndexMax: 6.0,
+          et0FaoEvapotranspiration: 4.0,
+          soilMoisture: 30.0,
+        );
+      });
     }
   }
 }
