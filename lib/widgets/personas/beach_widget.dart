@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../core/utils/unit_converter.dart';
 import '../../core/utils/weather_helpers.dart';
 import '../../data/models/weather_model.dart';
 import '../../data/models/marine_model.dart';
+import '../../providers/unit_provider.dart';
 import '../common/weather_card.dart';
 
-class BeachWidget extends StatelessWidget {
+class BeachWidget extends ConsumerWidget {
   final WeatherModel weather;
   final MarineModel marine;
 
@@ -36,8 +39,9 @@ class BeachWidget extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final unitSettings = ref.watch(unitSettingsProvider);
     final safetyColor = _getBeachSafetyColor();
     final safetyLabel = _getBeachSafetyLabel();
 
@@ -167,7 +171,7 @@ class BeachWidget extends StatelessWidget {
                       textBaseline: TextBaseline.alphabetic,
                       children: [
                         Text(
-                          '${marine.seaTemperature.round()}°',
+                          '${UnitConverter.convertTemp(marine.seaTemperature, unitSettings.tempUnit).round()}°',
                           style: const TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.w800,
@@ -175,9 +179,9 @@ class BeachWidget extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 2),
-                        const Text(
-                          'C',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.grey),
+                        Text(
+                          unitSettings.tempUnit == TemperatureUnit.fahrenheit ? 'F' : 'C',
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.grey),
                         ),
                       ],
                     ),

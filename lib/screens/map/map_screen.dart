@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/personas.dart';
+import '../../core/utils/unit_converter.dart';
 import '../../data/models/location_model.dart';
 import '../../data/models/weather_model.dart';
 import '../../data/models/air_quality_model.dart';
+import '../../providers/unit_provider.dart';
 import '../../providers/weather_provider.dart';
 import '../../providers/persona_provider.dart';
 import '../../widgets/common/weather_card.dart';
@@ -181,6 +183,7 @@ class _WeatherMapScreenState extends ConsumerState<WeatherMapScreen>
     final persona = ref.watch(personaProvider);
     final accent = Personas.color(persona);
     final bundle = ref.watch(weatherDataProvider).valueOrNull;
+    final unitSettings = ref.watch(unitSettingsProvider);
     final location = bundle?.location ?? LocationModel.defaultLocation();
     final weather = bundle?.weather;
     final aqi = bundle?.airQuality;
@@ -375,7 +378,9 @@ class _WeatherMapScreenState extends ConsumerState<WeatherMapScreen>
                           accent),
                       _metricCell(
                           'Temp',
-                          '${weather?.currentTemp.round() ?? 25}°C',
+                          weather != null
+                              ? UnitConverter.formatTemp(weather.currentTemp, unitSettings.tempUnit)
+                              : (unitSettings.tempUnit == TemperatureUnit.fahrenheit ? '77°F' : '25°C'),
                           const Color(0xFF10B981)),
                       _metricCell(
                           'Rain Prob',

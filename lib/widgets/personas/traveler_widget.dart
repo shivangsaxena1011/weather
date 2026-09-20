@@ -202,7 +202,7 @@ class TravelerWidget extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'AI luggage recommendations based on current temperature (${weather.currentTemp.round()}°C) and rain risk (${weather.precipitationProbability.round()}%):',
+                'AI luggage recommendations based on current temperature (${UnitConverter.formatTemp(weather.currentTemp, unitSettings.tempUnit)}) and rain risk (${weather.precipitationProbability.round()}%):',
                 style: TextStyle(
                   fontSize: 12.5,
                   color: isDark ? Colors.white70 : const Color(0xFF475569),

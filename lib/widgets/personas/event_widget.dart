@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/personas.dart';
+import '../../core/utils/unit_converter.dart';
 import '../../core/utils/weather_helpers.dart';
 import '../../data/models/weather_model.dart';
+import '../../providers/unit_provider.dart';
 import '../common/weather_card.dart';
 
-class EventWidget extends StatelessWidget {
+class EventWidget extends ConsumerWidget {
   final WeatherModel weather;
 
   const EventWidget({
@@ -36,9 +39,10 @@ class EventWidget extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = Personas.color(Personas.event);
+    final unitSettings = ref.watch(unitSettingsProvider);
 
     final todayComfort = weather.daily.isNotEmpty
         ? _calculateComfortScore(weather.daily.first).round()
@@ -155,7 +159,7 @@ class EventWidget extends StatelessWidget {
                       ),
                       Text(emoji, style: const TextStyle(fontSize: 24)),
                       Text(
-                        '${d.tempMax.round()}° / ${d.tempMin.round()}°',
+                        '${UnitConverter.convertTemp(d.tempMax, unitSettings.tempUnit).round()}° / ${UnitConverter.convertTemp(d.tempMin, unitSettings.tempUnit).round()}°',
                         style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
                       ),
                       Container(
