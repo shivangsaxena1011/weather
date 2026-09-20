@@ -65,6 +65,7 @@ class OpenMeteoService {
             'relative_humidity_2m',
             'visibility',
             'uv_index',
+            'soil_moisture_0_to_10cm',
           ].join(','),
           'daily': [
             'temperature_2m_max',
@@ -77,7 +78,6 @@ class OpenMeteoService {
             'sunset',
             'uv_index_max',
             'et0_fao_evapotranspiration',
-            'soil_moisture_0_to_10cm',
           ].join(','),
           'timezone': 'auto',
           'forecast_days': 14,

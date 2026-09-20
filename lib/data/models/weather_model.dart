@@ -274,7 +274,15 @@ class WeatherModel {
       final sSetStr = dailyRaw['sunset']?[i] as String? ?? '${dailyDates[i]}T18:00';
       final uvMax = (dailyRaw['uv_index_max']?[i] as num? ?? 0).toDouble().clamp(0.0, 25.0);
       final et0 = math.max(0.0, (dailyRaw['et0_fao_evapotranspiration']?[i] as num? ?? 0).toDouble());
-      final soil = (dailyRaw['soil_moisture_0_to_10cm']?[i] as num? ?? 30).toDouble().clamp(0.0, 100.0);
+      final hourlySoil = (hourlyRaw['soil_moisture_0_to_10cm'] as List<dynamic>?);
+      double soilVal = 35.0;
+      if (hourlySoil != null && i * 24 < hourlySoil.length && hourlySoil[i * 24] != null) {
+        final raw = (hourlySoil[i * 24] as num).toDouble();
+        soilVal = raw <= 1.0 ? raw * 100 : raw;
+      } else if (dailyRaw['soil_moisture_0_to_10cm']?[i] != null) {
+        soilVal = (dailyRaw['soil_moisture_0_to_10cm']?[i] as num).toDouble();
+      }
+      final soil = soilVal.clamp(0.0, 100.0);
 
       final dateParsed = DateTime.tryParse(dailyDates[i]) ?? DateTime.now();
       return DailyWeather(

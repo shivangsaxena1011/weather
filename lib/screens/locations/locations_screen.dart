@@ -54,6 +54,9 @@ class _LocationsScreenState extends ConsumerState<LocationsScreen>
   void _showAddPlaceDialog() {
     final searchController = TextEditingController();
     final geocoding = ref.read(geocodingServiceProvider);
+    List<LocationModel> results = [];
+    bool searching = false;
+    String? searchMessage;
 
     showModalBottomSheet(
       context: context,
@@ -62,9 +65,34 @@ class _LocationsScreenState extends ConsumerState<LocationsScreen>
       builder: (ctx) {
         final isDark = Theme.of(ctx).brightness == Brightness.dark;
         return StatefulBuilder(
-          builder: (context, setState) {
-            List<LocationModel> results = [];
-            bool searching = false;
+          builder: (context, setModalState) {
+            Future<void> executeSearch(String query) async {
+              final q = query.trim();
+              if (q.isEmpty) return;
+              setModalState(() {
+                searching = true;
+                searchMessage = null;
+                results = [];
+              });
+              try {
+                final res = await geocoding.searchCity(q);
+                setModalState(() {
+                  results = res;
+                  searching = false;
+                  if (res.isEmpty) {
+                    searchMessage =
+                        'No cities found matching "$q". Try another name.';
+                  }
+                });
+              } catch (_) {
+                setModalState(() {
+                  results = [];
+                  searching = false;
+                  searchMessage =
+                      'Search temporarily unavailable. Please check your connection.';
+                });
+              }
+            }
 
             return Container(
               padding: EdgeInsets.only(
@@ -101,9 +129,16 @@ class _LocationsScreenState extends ConsumerState<LocationsScreen>
                   TextField(
                     controller: searchController,
                     autofocus: true,
+                    textInputAction: TextInputAction.search,
                     decoration: InputDecoration(
                       hintText: 'Search city (e.g. Bhopal, Goa, London)...',
                       prefixIcon: const Icon(Icons.search_rounded),
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.arrow_forward_rounded),
+                        tooltip: 'Search City',
+                        onPressed: () =>
+                            executeSearch(searchController.text),
+                      ),
                       filled: true,
                       fillColor: isDark
                           ? const Color(0xFF222B3D)
@@ -113,15 +148,7 @@ class _LocationsScreenState extends ConsumerState<LocationsScreen>
                         borderSide: BorderSide.none,
                       ),
                     ),
-                    onSubmitted: (query) async {
-                      if (query.trim().isEmpty) return;
-                      setState(() => searching = true);
-                      final res = await geocoding.searchCity(query);
-                      setState(() {
-                        results = res;
-                        searching = false;
-                      });
-                    },
+                    onSubmitted: (query) => executeSearch(query),
                   ),
                   const SizedBox(height: 12),
                   if (searching)
@@ -131,9 +158,22 @@ class _LocationsScreenState extends ConsumerState<LocationsScreen>
                         child: CircularProgressIndicator(),
                       ),
                     ),
+                  if (searchMessage != null && !searching)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 12, horizontal: 4),
+                      child: Text(
+                        searchMessage!,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color:
+                              isDark ? Colors.white70 : const Color(0xFF64748B),
+                        ),
+                      ),
+                    ),
                   if (results.isNotEmpty)
                     ConstrainedBox(
-                      constraints: const BoxConstraints(maxHeight: 220),
+                      constraints: const BoxConstraints(maxHeight: 240),
                       child: ListView.separated(
                         shrinkWrap: true,
                         itemCount: results.length,
@@ -145,7 +185,10 @@ class _LocationsScreenState extends ConsumerState<LocationsScreen>
                             title: Text(loc.cityName,
                                 style: const TextStyle(
                                     fontWeight: FontWeight.w600)),
-                            subtitle: Text('${loc.state ?? ''} ${loc.country}'),
+                            subtitle: Text(
+                                '${loc.state != null && loc.state!.isNotEmpty ? '${loc.state}, ' : ''}${loc.country}'),
+                            trailing: const Icon(Icons.add_circle_outline_rounded,
+                                size: 20),
                             onTap: () {
                               ref
                                   .read(savedCitiesProvider.notifier)

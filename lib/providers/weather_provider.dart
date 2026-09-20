@@ -113,11 +113,11 @@ final weatherDataProvider =
       repo.getAirQuality(
         latitude: location.latitude,
         longitude: location.longitude,
-      ),
+      ).catchError((_) => AirQualityModel.mock()),
       repo.getMarine(
         latitude: location.latitude,
         longitude: location.longitude,
-      ),
+      ).catchError((_) => MarineModel.mock()),
     ]);
 
     final bundle = MausamDataBundle(

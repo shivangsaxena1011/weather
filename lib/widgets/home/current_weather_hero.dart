@@ -149,7 +149,7 @@ class CurrentWeatherHero extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '$tempStr°',
+                      tempStr,
                       style: TextStyle(
                         fontSize: 64,
                         fontWeight: FontWeight.w800,
@@ -171,7 +171,7 @@ class CurrentWeatherHero extends ConsumerWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          '•  H:$todayMax° L:$todayMin°',
+                          '•  H:$todayMax L:$todayMin',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
