@@ -49,7 +49,16 @@ class WeatherHelpers {
   }
 
   /// Returns an emoji corresponding to the weather code.
-  static String codeToEmoji(int code) {
+  static String codeToEmoji(int code, {bool isNight = false}) {
+    if (isNight) {
+      switch (code) {
+        case 0:
+          return '🌙';
+        case 1:
+        case 2:
+          return '☁️';
+      }
+    }
     switch (code) {
       case 0:
         return '☀️';
