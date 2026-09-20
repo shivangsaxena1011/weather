@@ -314,24 +314,49 @@ class HomeScreen extends ConsumerWidget {
                     ],
                   ),
                   error: (err, stack) => Container(
-                    padding: const EdgeInsets.all(20),
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
                     decoration: BoxDecoration(
                       color: isDark
                           ? const Color(0xFF2A1C1C)
                           : const Color(0xFFFFEBEE),
                       borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.redAccent.withOpacity(0.3),
+                      ),
                     ),
                     child: Column(
                       children: [
-                        const Text('⚠️ Connection Issue',
-                            style: TextStyle(fontWeight: FontWeight.w700)),
-                        const SizedBox(height: 6),
-                        const Text(
-                            'Unable to connect to weather service. Showing cached preview.'),
+                        const Icon(Icons.cloud_off_rounded, size: 40, color: Colors.redAccent),
                         const SizedBox(height: 10),
-                        ElevatedButton(
-                          onPressed: () => ref.refresh(weatherDataProvider),
-                          child: const Text('Retry'),
+                        const Text(
+                          'Connection Issue',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          err.toString().contains('Rate limit')
+                              ? 'Weather service rate limit reached. Please wait a minute and retry.'
+                              : 'Unable to reach weather servers. Please verify your internet connection or retry.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: isDark ? Colors.white70 : const Color(0xFF475569),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        ElevatedButton.icon(
+                          onPressed: () => ref.invalidate(weatherDataProvider),
+                          icon: const Icon(Icons.refresh_rounded, size: 18),
+                          label: const Text('Retry Network'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: accent,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
                         ),
                       ],
                     ),

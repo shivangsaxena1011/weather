@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/utils/aqi_formatter.dart';
+import '../../core/utils/unit_converter.dart';
 import '../../core/utils/weather_helpers.dart';
 import '../../data/models/weather_model.dart';
 import '../../data/models/air_quality_model.dart';
+import '../../providers/unit_provider.dart';
 import '../common/weather_card.dart';
 
-class HealthWidget extends StatelessWidget {
+class HealthWidget extends ConsumerWidget {
   final WeatherModel weather;
   final AirQualityModel airQuality;
 
@@ -16,9 +19,10 @@ class HealthWidget extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final unitSettings = ref.watch(unitSettingsProvider);
     final aqiColor = AqiFormatter.color(airQuality.aqi);
     final aqiLabel = AqiFormatter.label(airQuality.aqi);
     final advice = AqiFormatter.healthAdvice(airQuality.aqi);
@@ -254,7 +258,7 @@ class HealthWidget extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Dew point: ${weather.dewPoint.round()}°C',
+                      'Dew point: ${UnitConverter.formatTemp(weather.dewPoint, unitSettings.tempUnit)}',
                       style: TextStyle(
                         fontSize: 11.5,
                         color: isDark ? Colors.white54 : const Color(0xFF64748B),

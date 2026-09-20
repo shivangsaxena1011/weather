@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/personas.dart';
+import '../../core/utils/unit_converter.dart';
 import '../../core/utils/weather_helpers.dart';
 import '../../data/models/weather_model.dart';
+import '../../providers/unit_provider.dart';
 import '../common/weather_card.dart';
 
-class FitnessWidget extends StatelessWidget {
+class FitnessWidget extends ConsumerWidget {
   final WeatherModel weather;
 
   const FitnessWidget({
@@ -14,9 +17,10 @@ class FitnessWidget extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = Personas.color(Personas.fitness);
+    final unitSettings = ref.watch(unitSettingsProvider);
     final heatAlert = WeatherHelpers.feelsLikeAlert(weather.feelsLike);
     final beaufort = WeatherHelpers.beaufortLabel(weather.windSpeed);
     final cardinal = WeatherHelpers.degreesToCardinal(weather.windDirection);
@@ -187,7 +191,7 @@ class FitnessWidget extends StatelessWidget {
               _runWindowItem(
                 isDark,
                 timeWindow: '06:00 AM – 08:30 AM',
-                temp: '21°C',
+                temp: UnitConverter.formatTemp(21, unitSettings.tempUnit),
                 condition: 'Cool & Low UV',
                 icon: Icons.wb_twilight_rounded,
                 isRecommended: true,
@@ -196,7 +200,7 @@ class FitnessWidget extends StatelessWidget {
               _runWindowItem(
                 isDark,
                 timeWindow: '05:30 PM – 07:30 PM',
-                temp: '24°C',
+                temp: UnitConverter.formatTemp(24, unitSettings.tempUnit),
                 condition: 'Sunset Breeze',
                 icon: Icons.nightlight_round,
                 isRecommended: true,
@@ -205,7 +209,7 @@ class FitnessWidget extends StatelessWidget {
               _runWindowItem(
                 isDark,
                 timeWindow: '12:00 PM – 03:00 PM',
-                temp: '${weather.currentTemp.round() + 4}°C',
+                temp: UnitConverter.formatTemp(weather.currentTemp + 4, unitSettings.tempUnit),
                 condition: 'High UV & Heat: Avoid',
                 icon: Icons.warning_amber_rounded,
                 isRecommended: false,
@@ -227,7 +231,7 @@ class FitnessWidget extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          '${weather.windSpeed.round()}',
+                          UnitConverter.convertWind(weather.windSpeed, unitSettings.windUnit).toStringAsFixed(0),
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.w800,
@@ -235,7 +239,12 @@ class FitnessWidget extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 4),
-                        const Text('km/h', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                        Text(
+                          unitSettings.windUnit == WindSpeedUnit.mph
+                              ? 'mph'
+                              : (unitSettings.windUnit == WindSpeedUnit.ms ? 'm/s' : 'km/h'),
+                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 2),
@@ -269,7 +278,7 @@ class FitnessWidget extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${weather.feelsLike.round()}°C',
+                      UnitConverter.formatTemp(weather.feelsLike, unitSettings.tempUnit),
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w800,

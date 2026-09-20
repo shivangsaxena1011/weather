@@ -8,6 +8,8 @@ import '../../engines/comfort_score_engine.dart';
 import '../../providers/location_provider.dart';
 import '../../providers/persona_provider.dart';
 import '../../providers/weather_provider.dart';
+import '../../core/utils/unit_converter.dart';
+import '../../providers/unit_provider.dart';
 import '../../widgets/common/weather_card.dart';
 
 class LocationsScreen extends ConsumerStatefulWidget {
@@ -471,6 +473,7 @@ class _LocationsScreenState extends ConsumerState<LocationsScreen>
 
   Widget _buildComparisonMatrix(Color accent, bool isDark) {
     final cities = _selectedForComparison.toList();
+    final unitSettings = ref.watch(unitSettingsProvider);
 
     return WeatherCard(
       title: 'SIDE-BY-SIDE WEATHER COMPARISON',
@@ -485,12 +488,12 @@ class _LocationsScreenState extends ConsumerState<LocationsScreen>
                 )),
           ],
           rows: [
-            _buildRow('Temperature', cities, (data) => '${data.$1.currentTemp.round()}°C'),
-            _buildRow('Feels Like', cities, (data) => '${data.$1.feelsLike.round()}°C'),
+            _buildRow('Temperature', cities, (data) => UnitConverter.formatTemp(data.$1.currentTemp, unitSettings.tempUnit)),
+            _buildRow('Feels Like', cities, (data) => UnitConverter.formatTemp(data.$1.feelsLike, unitSettings.tempUnit)),
             _buildRow('Rain Risk', cities, (data) => '${data.$1.precipitationProbability.round()}%'),
             _buildRow('Air Quality', cities, (data) => '${data.$2.aqi} AQI'),
             _buildRow('UV Index', cities, (data) => data.$1.uvIndex.toStringAsFixed(1)),
-            _buildRow('Wind Speed', cities, (data) => '${data.$1.windSpeed.round()} km/h'),
+            _buildRow('Wind Speed', cities, (data) => UnitConverter.formatWind(data.$1.windSpeed, unitSettings.windUnit)),
             _buildRow('Comfort Score', cities, (data) {
               final score = ComfortScoreEngine.calculate(weather: data.$1, airQuality: data.$2);
               return '${score.overallScore}/100';

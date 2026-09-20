@@ -4,8 +4,10 @@ import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../core/constants/personas.dart';
 import '../../core/utils/weather_helpers.dart';
+import '../../core/utils/unit_converter.dart';
 import '../../providers/weather_provider.dart';
 import '../../providers/persona_provider.dart';
+import '../../providers/unit_provider.dart';
 import '../../widgets/common/weather_card.dart';
 
 class ForecastScreen extends ConsumerWidget {
@@ -17,6 +19,7 @@ class ForecastScreen extends ConsumerWidget {
     final isDark = theme.brightness == Brightness.dark;
     final bundleAsync = ref.watch(weatherDataProvider);
     final persona = ref.watch(personaProvider);
+    final unitSettings = ref.watch(unitSettingsProvider);
     final accent = Personas.color(persona);
 
     return Scaffold(
@@ -29,7 +32,41 @@ class ForecastScreen extends ConsumerWidget {
       ),
       body: bundleAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, __) => const Center(child: Text('Unable to load forecast data')),
+        error: (err, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.cloud_off_rounded, size: 54, color: Colors.grey),
+                const SizedBox(height: 12),
+                const Text(
+                  'Unable to Load Forecast',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Check your internet connection or tap retry.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 13, color: Colors.grey),
+                ),
+                const SizedBox(height: 18),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: accent,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: const Icon(Icons.refresh_rounded, size: 18),
+                  label: const Text('Retry'),
+                  onPressed: () => ref.invalidate(weatherDataProvider),
+                ),
+              ],
+            ),
+          ),
+        ),
         data: (bundle) {
           final weather = bundle.weather;
           return SingleChildScrollView(
@@ -69,7 +106,7 @@ class ForecastScreen extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        '${weather.currentTemp.round()}°C',
+                        UnitConverter.formatTemp(weather.currentTemp, unitSettings.tempUnit),
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
@@ -123,7 +160,7 @@ class ForecastScreen extends ConsumerWidget {
                               ),
                               Text(emoji, style: const TextStyle(fontSize: 22)),
                               Text(
-                                '${h.temperature.round()}°',
+                                UnitConverter.formatTemp(h.temperature, unitSettings.tempUnit, showUnit: false),
                                 style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
@@ -149,7 +186,7 @@ class ForecastScreen extends ConsumerWidget {
 
                 // 24h Temperature FlChart Line Chart
                 WeatherCard(
-                  title: 'TEMPERATURE TREND (°C)',
+                  title: 'TEMPERATURE TREND (${unitSettings.tempUnit == TemperatureUnit.fahrenheit ? '°F' : '°C'})',
                   child: SizedBox(
                     height: 140,
                     child: LineChart(
@@ -163,7 +200,7 @@ class ForecastScreen extends ConsumerWidget {
                               weather.hourly.take(12).length,
                               (i) => FlSpot(
                                 i.toDouble(),
-                                weather.hourly[i].temperature,
+                                UnitConverter.convertTemp(weather.hourly[i].temperature, unitSettings.tempUnit),
                               ),
                             ),
                             isCurved: true,
@@ -183,72 +220,76 @@ class ForecastScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 18),
 
-                // 7-Day Forecast Rows
+                // 7-Day Day-by-Day Forecast
                 WeatherCard(
-                  title: '7-DAY WEATHER SUMMARY',
-                  child: Column(
-                    children: List.generate(
-                      weather.daily.take(7).length,
-                      (i) {
-                        final d = weather.daily[i];
-                        final dayName = i == 0
-                            ? 'Today'
-                            : DateFormat('EEEE').format(d.date);
-                        final emoji = WeatherHelpers.codeToEmoji(d.weatherCode);
-                        final desc = WeatherHelpers.codeToDescription(d.weatherCode);
-
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          child: Row(
-                            children: [
-                              SizedBox(
-                                width: 90,
-                                child: Text(
-                                  dayName,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: isDark ? Colors.white : const Color(0xFF1E293B),
-                                  ),
-                                ),
-                              ),
-                              Text(emoji, style: const TextStyle(fontSize: 22)),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  desc,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 12.5,
-                                    color: isDark ? Colors.white60 : const Color(0xFF64748B),
-                                  ),
-                                ),
-                              ),
-                              Row(
-                                children: [
-                                  Text(
-                                    '${d.tempMax.round()}°',
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    '${d.tempMin.round()}°',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: isDark ? Colors.white54 : const Color(0xFF94A3B8),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        );
-                      },
+                  title: '7-DAY OUTLOOK',
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: weather.daily.take(7).length,
+                    separatorBuilder: (_, __) => Divider(
+                      height: 16,
+                      color: isDark ? Colors.white10 : const Color(0xFFF1F5F9),
                     ),
+                    itemBuilder: (context, i) {
+                      final d = weather.daily[i];
+                      final dayName = i == 0
+                          ? 'Today'
+                          : (i == 1 ? 'Tomorrow' : DateFormat('EEEE').format(d.date));
+                      final emoji = WeatherHelpers.codeToEmoji(d.weatherCode);
+                      final desc = WeatherHelpers.codeToDescription(d.weatherCode);
+
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 90,
+                              child: Text(
+                                dayName,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? Colors.white : const Color(0xFF1E293B),
+                                ),
+                              ),
+                            ),
+                            Text(emoji, style: const TextStyle(fontSize: 22)),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                desc,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                                ),
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                Text(
+                                  UnitConverter.formatTemp(d.tempMax, unitSettings.tempUnit, showUnit: false),
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  UnitConverter.formatTemp(d.tempMin, unitSettings.tempUnit, showUnit: false),
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: isDark ? Colors.white54 : const Color(0xFF94A3B8),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(height: 24),

@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/personas.dart';
 import '../../core/utils/aqi_formatter.dart';
+import '../../core/utils/unit_converter.dart';
 import '../../core/utils/weather_helpers.dart';
 import '../../data/models/weather_model.dart';
 import '../../data/models/air_quality_model.dart';
+import '../../providers/unit_provider.dart';
 import '../common/stat_chip.dart';
 
-class QuickStatsRow extends StatelessWidget {
+class QuickStatsRow extends ConsumerWidget {
   final WeatherModel weather;
   final AirQualityModel airQuality;
   final String persona;
@@ -19,8 +22,9 @@ class QuickStatsRow extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final accent = Personas.color(persona);
+    final unitSettings = ref.watch(unitSettingsProvider);
     final aqiColor = AqiFormatter.color(airQuality.aqi);
     final aqiLabel = AqiFormatter.label(airQuality.aqi);
     final visibilityKm = (weather.visibility / 1000).toStringAsFixed(1);
@@ -65,8 +69,8 @@ class QuickStatsRow extends StatelessWidget {
           const SizedBox(width: 10),
           StatChip(
             label: 'Dew Point',
-            value: '${weather.dewPoint.round()}',
-            unit: '°C',
+            value: '${UnitConverter.convertTemp(weather.dewPoint, unitSettings.tempUnit).round()}',
+            unit: unitSettings.tempUnit == TemperatureUnit.fahrenheit ? '°F' : '°C',
             icon: Icons.grain_rounded,
             color: accent,
           ),

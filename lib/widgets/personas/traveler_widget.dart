@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/personas.dart';
 import '../../core/utils/packing_suggestions.dart';
+import '../../core/utils/unit_converter.dart';
 import '../../core/utils/weather_helpers.dart';
 import '../../data/models/weather_model.dart';
 import '../../data/models/location_model.dart';
+import '../../providers/unit_provider.dart';
 import '../common/weather_card.dart';
 
-class TravelerWidget extends StatelessWidget {
+class TravelerWidget extends ConsumerWidget {
   final WeatherModel weather;
   final List<LocationModel> savedCities;
   final Function(LocationModel)? onCitySelect;
@@ -26,9 +29,10 @@ class TravelerWidget extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = Personas.color(Personas.traveler);
+    final unitSettings = ref.watch(unitSettingsProvider);
     final hasFlightDelayRisk = _isFlightAlertNeeded();
 
     final packingList = PackingSuggestions.getSuggestions(weather);
@@ -108,9 +112,9 @@ class TravelerWidget extends StatelessWidget {
               itemBuilder: (context, i) {
                 final city = savedCities[i];
                 // Sample simulated temperatures for quick preview
-                final sampleTemps = ['17°C', '24°C', '14°C', '28°C'];
+                final sampleTemps = [17.0, 24.0, 14.0, 28.0];
                 final sampleEmojis = ['🌧️', '🌤️', '☀️', '⛅'];
-                final temp = sampleTemps[i % sampleTemps.length];
+                final temp = UnitConverter.formatTemp(sampleTemps[i % sampleTemps.length], unitSettings.tempUnit);
                 final emoji = sampleEmojis[i % sampleEmojis.length];
 
                 return InkWell(

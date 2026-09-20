@@ -109,9 +109,12 @@ class CurrentWeatherHero extends ConsumerWidget {
 
     final bgColors = _getDynamicWeatherGradient(weather.weatherCode, isDark, accent);
 
-    return InkWell(
-      onTap: onForecastTap,
-      borderRadius: BorderRadius.circular(28),
+    return Semantics(
+      button: true,
+      label: 'Current temperature $tempStr degrees, $description, feels like $feelsLikeStr, wind $windStr. Tap to open 14-day weather forecast.',
+      child: InkWell(
+        onTap: onForecastTap,
+        borderRadius: BorderRadius.circular(28),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 400),
         width: double.infinity,
@@ -237,6 +240,7 @@ class CurrentWeatherHero extends ConsumerWidget {
           ],
         ),
       ),
+    ),
     );
   }
 

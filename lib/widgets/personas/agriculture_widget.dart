@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../core/constants/personas.dart';
+import '../../core/utils/unit_converter.dart';
 import '../../data/models/weather_model.dart';
+import '../../providers/unit_provider.dart';
 import '../common/weather_card.dart';
 
-class AgricultureWidget extends StatelessWidget {
+class AgricultureWidget extends ConsumerWidget {
   final WeatherModel weather;
 
   const AgricultureWidget({
@@ -30,9 +33,10 @@ class AgricultureWidget extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = Personas.color(Personas.agriculture);
+    final unitSettings = ref.watch(unitSettingsProvider);
     final hasFrost = _hasFrostAlert();
 
     final soilMoisture = weather.daily.isNotEmpty
@@ -56,15 +60,15 @@ class AgricultureWidget extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: const Color(0xFF00ACC1), width: 1.2),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Text('❄️', style: TextStyle(fontSize: 26)),
-                SizedBox(width: 14),
+                const Text('❄️', style: TextStyle(fontSize: 26)),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      const Text(
                         'Frost Advisory for Crops & Plants',
                         style: TextStyle(
                           fontSize: 14,
@@ -72,10 +76,10 @@ class AgricultureWidget extends StatelessWidget {
                           color: Color(0xFF00838F),
                         ),
                       ),
-                      SizedBox(height: 3),
+                      const SizedBox(height: 3),
                       Text(
-                        'Temperatures falling to near or below freezing (≤ 2°C) in upcoming days. Cover sensitive plants and irrigate beforehand.',
-                        style: TextStyle(fontSize: 12),
+                        'Temperatures falling to near or below freezing (≤ ${UnitConverter.formatTemp(2, unitSettings.tempUnit)}) in upcoming days. Cover sensitive plants and irrigate beforehand.',
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ],
                   ),

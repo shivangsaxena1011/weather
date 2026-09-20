@@ -40,35 +40,39 @@ class PersonaHeader extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             // Location button with pin icon
-            InkWell(
-              onTap: onLocationTap,
-              borderRadius: BorderRadius.circular(12),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.location_on_rounded,
-                      size: 18,
-                      color: accent,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      cityName,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white : const Color(0xFF1E293B),
+            Semantics(
+              button: true,
+              label: 'Selected location: $cityName. Tap to search or change location',
+              child: InkWell(
+                onTap: onLocationTap,
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.location_on_rounded,
+                        size: 18,
+                        color: accent,
                       ),
-                    ),
-                    const SizedBox(width: 2),
-                    Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      size: 18,
-                      color: isDark ? Colors.white54 : const Color(0xFF64748B),
-                    ),
-                  ],
+                      const SizedBox(width: 4),
+                      Text(
+                        cityName,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white : const Color(0xFF1E293B),
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        size: 18,
+                        color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -112,34 +116,38 @@ class PersonaHeader extends StatelessWidget {
               ),
             ),
             // Persona badge (tappable to switch)
-            InkWell(
-              onTap: onPersonaTap,
-              borderRadius: BorderRadius.circular(24),
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: accent.withOpacity(isDark ? 0.25 : 0.12),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: accent.withOpacity(0.4),
-                    width: 1.2,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(emoji, style: const TextStyle(fontSize: 16)),
-                    const SizedBox(width: 6),
-                    Text(
-                      personaLabel,
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w700,
-                        color: accent,
-                      ),
+            Semantics(
+              button: true,
+              label: 'Active persona: $personaLabel. Tap to switch persona',
+              child: InkWell(
+                onTap: onPersonaTap,
+                borderRadius: BorderRadius.circular(24),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: accent.withOpacity(isDark ? 0.25 : 0.12),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: accent.withOpacity(0.4),
+                      width: 1.2,
                     ),
-                  ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(emoji, style: const TextStyle(fontSize: 16)),
+                      const SizedBox(width: 6),
+                      Text(
+                        personaLabel,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                          color: accent,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

@@ -7,6 +7,8 @@ import '../../data/models/weather_model.dart';
 import '../../providers/location_provider.dart';
 import '../../providers/persona_provider.dart';
 import '../../providers/weather_provider.dart';
+import '../../core/utils/unit_converter.dart';
+import '../../providers/unit_provider.dart';
 import '../../widgets/common/weather_card.dart';
 
 class TravelScreen extends ConsumerStatefulWidget {
@@ -117,6 +119,7 @@ class _TravelScreenState extends ConsumerState<TravelScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final persona = ref.watch(personaProvider);
     final accent = Personas.color(persona);
+    final unitSettings = ref.watch(unitSettingsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -261,12 +264,12 @@ class _TravelScreenState extends ConsumerState<TravelScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '${_travelWeather!.currentTemp.round()}°C',
+                              UnitConverter.formatTemp(_travelWeather!.currentTemp, unitSettings.tempUnit),
                               style: const TextStyle(
                                   fontSize: 38, fontWeight: FontWeight.w800),
                             ),
                             Text(
-                              'Feels like ${_travelWeather!.feelsLike.round()}°C',
+                              'Feels like ${UnitConverter.formatTemp(_travelWeather!.feelsLike, unitSettings.tempUnit)}',
                               style: TextStyle(
                                 color: isDark ? Colors.white60 : const Color(0xFF64748B),
                               ),
@@ -303,7 +306,7 @@ class _TravelScreenState extends ConsumerState<TravelScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        _tripStat('Wind', '${_travelWeather!.windSpeed.round()} km/h'),
+                        _tripStat('Wind', UnitConverter.formatWind(_travelWeather!.windSpeed, unitSettings.windUnit)),
                         _tripStat('UV Max', _travelWeather!.uvIndex.toStringAsFixed(1)),
                         _tripStat('Humidity', '${_travelWeather!.humidity.round()}%'),
                       ],

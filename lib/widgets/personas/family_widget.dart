@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/utils/unit_converter.dart';
 import '../../core/utils/weather_helpers.dart';
 import '../../data/models/weather_model.dart';
+import '../../providers/unit_provider.dart';
 import '../common/weather_card.dart';
 
-class FamilyWidget extends StatelessWidget {
+class FamilyWidget extends ConsumerWidget {
   final WeatherModel weather;
 
   const FamilyWidget({
@@ -12,8 +15,9 @@ class FamilyWidget extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final unitSettings = ref.watch(unitSettingsProvider);
 
     final isSevere = WeatherHelpers.isStorm(weather.weatherCode) ||
         weather.precipitationProbability > 75 ||
@@ -93,7 +97,7 @@ class FamilyWidget extends StatelessWidget {
                 isDark,
                 slotName: 'Morning Drop-off',
                 time: '07:00 AM – 08:30 AM',
-                temp: '${weather.currentTemp.round()}°C',
+                temp: UnitConverter.formatTemp(weather.currentTemp, unitSettings.tempUnit),
                 condition: 'Brisk & Fresh',
                 icon: Icons.wb_twilight_rounded,
                 safety: 'Good Commute 🟢',
@@ -104,7 +108,7 @@ class FamilyWidget extends StatelessWidget {
                 isDark,
                 slotName: 'Afternoon Pick-up',
                 time: '02:30 PM – 04:00 PM',
-                temp: '${weather.currentTemp.round() + 3}°C',
+                temp: UnitConverter.formatTemp(weather.currentTemp + 3, unitSettings.tempUnit),
                 condition: needUmbrella ? 'Rain Showers Likely' : 'Warm & Clear',
                 icon: needUmbrella
                     ? Icons.water_drop_rounded

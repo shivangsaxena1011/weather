@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/personas.dart';
+import '../../core/utils/unit_converter.dart';
 import '../../core/utils/weather_helpers.dart';
 import '../../data/models/weather_model.dart';
+import '../../providers/unit_provider.dart';
 import '../common/weather_card.dart';
 
-class CommuterWidget extends StatelessWidget {
+class CommuterWidget extends ConsumerWidget {
   final WeatherModel weather;
 
   const CommuterWidget({
@@ -28,9 +31,10 @@ class CommuterWidget extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = Personas.color(Personas.commuter);
+    final unitSettings = ref.watch(unitSettingsProvider);
     final isFog = WeatherHelpers.isFog(weather.weatherCode);
     final isStorm = WeatherHelpers.isStorm(weather.weatherCode);
     final hasCommuteAlert = isFog || isStorm || weather.precipitationProbability > 65;
@@ -182,7 +186,7 @@ class CommuterWidget extends StatelessWidget {
                     Text(emoji, style: const TextStyle(fontSize: 24)),
                     const SizedBox(height: 6),
                     Text(
-                      '${h.temperature.round()}°C',
+                      UnitConverter.formatTemp(h.temperature, unitSettings.tempUnit),
                       style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 2),

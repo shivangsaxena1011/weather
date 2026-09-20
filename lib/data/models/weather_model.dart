@@ -144,6 +144,8 @@ class WeatherModel {
   final double dewPoint;
   final List<HourlyWeather> hourly;
   final List<DailyWeather> daily;
+  final int utcOffsetSeconds;
+  final String timezoneName;
 
   const WeatherModel({
     required this.cityName,
@@ -162,6 +164,8 @@ class WeatherModel {
     required this.dewPoint,
     required this.hourly,
     required this.daily,
+    this.utcOffsetSeconds = 0,
+    this.timezoneName = 'UTC',
   });
 
   /// Returns a mock/demo weather model for UI development.
@@ -224,69 +228,106 @@ class WeatherModel {
     );
   }
 
-  factory WeatherModel.fromJson(Map<String, dynamic> json) {
-    final current = json['current'] as Map<String, dynamic>;
+  factory WeatherModel.fromJson(Map<String, dynamic> json, {String? cityName}) {
+    final current = (json['current'] as Map<String, dynamic>?) ?? {};
     final hourlyRaw = json['hourly'] as Map<String, dynamic>? ?? {};
     final dailyRaw = json['daily'] as Map<String, dynamic>? ?? {};
 
     final times = (hourlyRaw['time'] as List<dynamic>? ?? []).cast<String>();
     final hourly = List.generate(times.length, (i) {
-      return HourlyWeather.fromJson({
-        'time': times[i],
-        'temperature_2m': hourlyRaw['temperature_2m']?[i] ?? 0,
-        'apparent_temperature': hourlyRaw['apparent_temperature']?[i] ?? 0,
-        'precipitation_probability':
-            hourlyRaw['precipitation_probability']?[i] ?? 0,
-        'precipitation': hourlyRaw['precipitation']?[i] ?? 0,
-        'wind_speed_10m': hourlyRaw['wind_speed_10m']?[i] ?? 0,
-        'wind_direction_10m': hourlyRaw['wind_direction_10m']?[i] ?? 0,
-        'weather_code': hourlyRaw['weather_code']?[i] ?? 0,
-        'relative_humidity_2m': hourlyRaw['relative_humidity_2m']?[i] ?? 0,
-        'visibility': hourlyRaw['visibility']?[i] ?? 10000,
-        'uv_index': hourlyRaw['uv_index']?[i] ?? 0,
-      });
+      final t = (hourlyRaw['temperature_2m']?[i] as num? ?? 20).toDouble().clamp(-90.0, 60.0);
+      final fl = (hourlyRaw['apparent_temperature']?[i] as num? ?? t).toDouble().clamp(-90.0, 65.0);
+      final pProb = (hourlyRaw['precipitation_probability']?[i] as num? ?? 0).toDouble().clamp(0.0, 100.0);
+      final pMm = math.max(0.0, (hourlyRaw['precipitation']?[i] as num? ?? 0).toDouble());
+      final ws = (hourlyRaw['wind_speed_10m']?[i] as num? ?? 0).toDouble().clamp(0.0, 350.0);
+      final wd = (hourlyRaw['wind_direction_10m']?[i] as num? ?? 0).toDouble().clamp(0.0, 360.0);
+      final code = (hourlyRaw['weather_code']?[i] as num? ?? 0).toInt().clamp(0, 99);
+      final hum = (hourlyRaw['relative_humidity_2m']?[i] as num? ?? 50).toDouble().clamp(0.0, 100.0);
+      final vis = math.max(0.0, (hourlyRaw['visibility']?[i] as num? ?? 10000).toDouble());
+      final uv = (hourlyRaw['uv_index']?[i] as num? ?? 0).toDouble().clamp(0.0, 25.0);
+
+      return HourlyWeather(
+        time: DateTime.tryParse(times[i]) ?? DateTime.now(),
+        temperature: t,
+        feelsLike: fl,
+        precipitationProbability: pProb,
+        precipitation: pMm,
+        windSpeed: ws,
+        windDirection: wd,
+        weatherCode: code,
+        humidity: hum,
+        visibility: vis,
+        uvIndex: uv,
+      );
     });
 
     final dailyDates =
         (dailyRaw['time'] as List<dynamic>? ?? []).cast<String>();
     final daily = List.generate(dailyDates.length, (i) {
-      return DailyWeather.fromJson({
-        'date': dailyDates[i],
-        'temperature_2m_min': dailyRaw['temperature_2m_min']?[i] ?? 0,
-        'temperature_2m_max': dailyRaw['temperature_2m_max']?[i] ?? 0,
-        'precipitation_sum': dailyRaw['precipitation_sum']?[i] ?? 0,
-        'precipitation_probability_max':
-            dailyRaw['precipitation_probability_max']?[i] ?? 0,
-        'wind_speed_10m_max': dailyRaw['wind_speed_10m_max']?[i] ?? 0,
-        'weather_code': dailyRaw['weather_code']?[i] ?? 0,
-        'sunrise': dailyRaw['sunrise']?[i] ?? '${dailyDates[i]}T06:00',
-        'sunset': dailyRaw['sunset']?[i] ?? '${dailyDates[i]}T18:00',
-        'uv_index_max': dailyRaw['uv_index_max']?[i] ?? 0,
-        'et0_fao_evapotranspiration':
-            dailyRaw['et0_fao_evapotranspiration']?[i] ?? 0,
-        'soil_moisture_0_to_10cm':
-            dailyRaw['soil_moisture_0_to_10cm']?[i] ?? 30,
-      });
+      final tMin = (dailyRaw['temperature_2m_min']?[i] as num? ?? 10).toDouble().clamp(-90.0, 60.0);
+      final tMax = (dailyRaw['temperature_2m_max']?[i] as num? ?? 25).toDouble().clamp(-90.0, 60.0);
+      final pSum = math.max(0.0, (dailyRaw['precipitation_sum']?[i] as num? ?? 0).toDouble());
+      final pMaxProb = (dailyRaw['precipitation_probability_max']?[i] as num? ?? 0).toDouble().clamp(0.0, 100.0);
+      final wsMax = (dailyRaw['wind_speed_10m_max']?[i] as num? ?? 0).toDouble().clamp(0.0, 350.0);
+      final code = (dailyRaw['weather_code']?[i] as num? ?? 0).toInt().clamp(0, 99);
+      final sRiseStr = dailyRaw['sunrise']?[i] as String? ?? '${dailyDates[i]}T06:00';
+      final sSetStr = dailyRaw['sunset']?[i] as String? ?? '${dailyDates[i]}T18:00';
+      final uvMax = (dailyRaw['uv_index_max']?[i] as num? ?? 0).toDouble().clamp(0.0, 25.0);
+      final et0 = math.max(0.0, (dailyRaw['et0_fao_evapotranspiration']?[i] as num? ?? 0).toDouble());
+      final soil = (dailyRaw['soil_moisture_0_to_10cm']?[i] as num? ?? 30).toDouble().clamp(0.0, 100.0);
+
+      final dateParsed = DateTime.tryParse(dailyDates[i]) ?? DateTime.now();
+      return DailyWeather(
+        date: dateParsed,
+        tempMin: tMin,
+        tempMax: tMax,
+        precipitationSum: pSum,
+        precipitationProbabilityMax: pMaxProb,
+        windSpeedMax: wsMax,
+        weatherCode: code,
+        sunrise: DateTime.tryParse(sRiseStr) ?? DateTime(dateParsed.year, dateParsed.month, dateParsed.day, 6),
+        sunset: DateTime.tryParse(sSetStr) ?? DateTime(dateParsed.year, dateParsed.month, dateParsed.day, 18),
+        uvIndexMax: uvMax,
+        et0FaoEvapotranspiration: et0,
+        soilMoisture: soil,
+      );
     });
 
+    final lat = (json['latitude'] as num? ?? 0).toDouble().clamp(-90.0, 90.0);
+    final lon = (json['longitude'] as num? ?? 0).toDouble().clamp(-180.0, 180.0);
+    final curTemp = (current['temperature_2m'] as num? ?? 20).toDouble().clamp(-90.0, 60.0);
+    final curFeels = (current['apparent_temperature'] as num? ?? curTemp).toDouble().clamp(-90.0, 65.0);
+    final curHum = (current['relative_humidity_2m'] as num? ?? 50).toDouble().clamp(0.0, 100.0);
+    final curWind = (current['wind_speed_10m'] as num? ?? 0).toDouble().clamp(0.0, 350.0);
+    final curWindDir = (current['wind_direction_10m'] as num? ?? 0).toDouble().clamp(0.0, 360.0);
+    final curCode = (current['weather_code'] as num? ?? 0).toInt().clamp(0, 99);
+    final curPrecip = math.max(0.0, (current['precipitation'] as num? ?? 0).toDouble());
+    final curPrecipProb = (current['precipitation_probability'] as num? ?? 0).toDouble().clamp(0.0, 100.0);
+    final curVis = math.max(0.0, (current['visibility'] as num? ?? 10000).toDouble());
+    final curUv = (current['uv_index'] as num? ?? 0).toDouble().clamp(0.0, 25.0);
+    final curDew = (current['dew_point_2m'] as num? ?? 12).toDouble().clamp(-90.0, 50.0);
+    final offset = (json['utc_offset_seconds'] as num? ?? 0).toInt();
+    final tz = json['timezone'] as String? ?? 'UTC';
+
     return WeatherModel(
-      cityName: json['timezone'] as String? ?? 'Unknown',
-      latitude: (json['latitude'] as num? ?? 0).toDouble(),
-      longitude: (json['longitude'] as num? ?? 0).toDouble(),
-      currentTemp: (current['temperature_2m'] as num? ?? 0).toDouble(),
-      feelsLike: (current['apparent_temperature'] as num? ?? 0).toDouble(),
-      humidity: (current['relative_humidity_2m'] as num? ?? 0).toDouble(),
-      windSpeed: (current['wind_speed_10m'] as num? ?? 0).toDouble(),
-      windDirection: (current['wind_direction_10m'] as num? ?? 0).toDouble(),
-      weatherCode: (current['weather_code'] as num? ?? 0).toInt(),
-      precipitation: (current['precipitation'] as num? ?? 0).toDouble(),
-      precipitationProbability:
-          (current['precipitation_probability'] as num? ?? 0).toDouble(),
-      visibility: (current['visibility'] as num? ?? 10000).toDouble(),
-      uvIndex: (current['uv_index'] as num? ?? 0).toDouble(),
-      dewPoint: (current['dew_point_2m'] as num? ?? 0).toDouble(),
+      cityName: cityName ?? (json['cityName'] as String? ?? (json['timezone'] as String? ?? 'Unknown')),
+      latitude: lat,
+      longitude: lon,
+      currentTemp: curTemp,
+      feelsLike: curFeels,
+      humidity: curHum,
+      windSpeed: curWind,
+      windDirection: curWindDir,
+      weatherCode: curCode,
+      precipitation: curPrecip,
+      precipitationProbability: curPrecipProb,
+      visibility: curVis,
+      uvIndex: curUv,
+      dewPoint: curDew,
       hourly: hourly,
       daily: daily,
+      utcOffsetSeconds: offset,
+      timezoneName: tz,
     );
   }
 
@@ -307,31 +348,35 @@ class WeatherModel {
         'dewPoint': dewPoint,
         'hourly': hourly.map((h) => h.toJson()).toList(),
         'daily': daily.map((d) => d.toJson()).toList(),
+        'utcOffsetSeconds': utcOffsetSeconds,
+        'timezoneName': timezoneName,
       };
 
   factory WeatherModel.fromCacheJson(Map<String, dynamic> json) {
     return WeatherModel(
       cityName: json['cityName'] as String? ?? 'Unknown',
-      latitude: (json['latitude'] as num? ?? 0).toDouble(),
-      longitude: (json['longitude'] as num? ?? 0).toDouble(),
-      currentTemp: (json['currentTemp'] as num? ?? 0).toDouble(),
-      feelsLike: (json['feelsLike'] as num? ?? 0).toDouble(),
-      humidity: (json['humidity'] as num? ?? 0).toDouble(),
-      windSpeed: (json['windSpeed'] as num? ?? 0).toDouble(),
-      windDirection: (json['windDirection'] as num? ?? 0).toDouble(),
-      weatherCode: (json['weatherCode'] as num? ?? 0).toInt(),
-      precipitation: (json['precipitation'] as num? ?? 0).toDouble(),
+      latitude: (json['latitude'] as num? ?? 0).toDouble().clamp(-90.0, 90.0),
+      longitude: (json['longitude'] as num? ?? 0).toDouble().clamp(-180.0, 180.0),
+      currentTemp: (json['currentTemp'] as num? ?? 20).toDouble().clamp(-90.0, 60.0),
+      feelsLike: (json['feelsLike'] as num? ?? 20).toDouble().clamp(-90.0, 65.0),
+      humidity: (json['humidity'] as num? ?? 50).toDouble().clamp(0.0, 100.0),
+      windSpeed: (json['windSpeed'] as num? ?? 0).toDouble().clamp(0.0, 350.0),
+      windDirection: (json['windDirection'] as num? ?? 0).toDouble().clamp(0.0, 360.0),
+      weatherCode: (json['weatherCode'] as num? ?? 0).toInt().clamp(0, 99),
+      precipitation: math.max(0.0, (json['precipitation'] as num? ?? 0).toDouble()),
       precipitationProbability:
-          (json['precipitationProbability'] as num? ?? 0).toDouble(),
-      visibility: (json['visibility'] as num? ?? 10000).toDouble(),
-      uvIndex: (json['uvIndex'] as num? ?? 0).toDouble(),
-      dewPoint: (json['dewPoint'] as num? ?? 0).toDouble(),
+          (json['precipitationProbability'] as num? ?? 0).toDouble().clamp(0.0, 100.0),
+      visibility: math.max(0.0, (json['visibility'] as num? ?? 10000).toDouble()),
+      uvIndex: (json['uvIndex'] as num? ?? 0).toDouble().clamp(0.0, 25.0),
+      dewPoint: (json['dewPoint'] as num? ?? 12).toDouble().clamp(-90.0, 50.0),
       hourly: ((json['hourly'] as List<dynamic>?) ?? [])
           .map((h) => HourlyWeather.fromJson(h as Map<String, dynamic>))
           .toList(),
       daily: ((json['daily'] as List<dynamic>?) ?? [])
           .map((d) => DailyWeather.fromJson(d as Map<String, dynamic>))
           .toList(),
+      utcOffsetSeconds: (json['utcOffsetSeconds'] as num? ?? 0).toInt(),
+      timezoneName: json['timezoneName'] as String? ?? 'UTC',
     );
   }
 }

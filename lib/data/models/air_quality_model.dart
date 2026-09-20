@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 /// Air quality data model containing AQI, pollen counts, and UV information.
 class AirQualityModel {
   final int aqi;
@@ -40,15 +42,15 @@ class AirQualityModel {
   factory AirQualityModel.fromJson(Map<String, dynamic> json) {
     final current = json['current'] as Map<String, dynamic>? ?? json;
     return AirQualityModel(
-      aqi: (current['european_aqi'] as num? ?? 0).toInt(),
-      pm25: (current['pm2_5'] as num? ?? 0).toDouble(),
-      pm10: (current['pm10'] as num? ?? 0).toDouble(),
-      no2: (current['nitrogen_dioxide'] as num? ?? 0).toDouble(),
-      o3: (current['ozone'] as num? ?? 0).toDouble(),
-      grassPollen: (current['grass_pollen'] as num? ?? 0).toDouble(),
-      treePollen: (current['tree_pollen'] as num? ?? 0).toDouble(),
-      weedPollen: (current['weed_pollen'] as num? ?? 0).toDouble(),
-      uvIndex: (current['uv_index'] as num? ?? 0).toDouble(),
+      aqi: (current['european_aqi'] as num? ?? 0).toInt().clamp(0, 500),
+      pm25: math.max(0.0, (current['pm2_5'] as num? ?? 0).toDouble()),
+      pm10: math.max(0.0, (current['pm10'] as num? ?? 0).toDouble()),
+      no2: math.max(0.0, (current['nitrogen_dioxide'] as num? ?? 0).toDouble()),
+      o3: math.max(0.0, (current['ozone'] as num? ?? 0).toDouble()),
+      grassPollen: math.max(0.0, (current['grass_pollen'] as num? ?? 0).toDouble()),
+      treePollen: math.max(0.0, (current['tree_pollen'] as num? ?? current['birch_pollen'] as num? ?? 0).toDouble()),
+      weedPollen: math.max(0.0, (current['weed_pollen'] as num? ?? current['ragweed_pollen'] as num? ?? 0).toDouble()),
+      uvIndex: (current['uv_index'] as num? ?? 0).toDouble().clamp(0.0, 25.0),
     );
   }
 
@@ -66,15 +68,15 @@ class AirQualityModel {
 
   factory AirQualityModel.fromCacheJson(Map<String, dynamic> json) {
     return AirQualityModel(
-      aqi: (json['aqi'] as num? ?? 0).toInt(),
-      pm25: (json['pm25'] as num? ?? 0).toDouble(),
-      pm10: (json['pm10'] as num? ?? 0).toDouble(),
-      no2: (json['no2'] as num? ?? 0).toDouble(),
-      o3: (json['o3'] as num? ?? 0).toDouble(),
-      grassPollen: (json['grassPollen'] as num? ?? 0).toDouble(),
-      treePollen: (json['treePollen'] as num? ?? 0).toDouble(),
-      weedPollen: (json['weedPollen'] as num? ?? 0).toDouble(),
-      uvIndex: (json['uvIndex'] as num? ?? 0).toDouble(),
+      aqi: (json['aqi'] as num? ?? 0).toInt().clamp(0, 500),
+      pm25: math.max(0.0, (json['pm25'] as num? ?? 0).toDouble()),
+      pm10: math.max(0.0, (json['pm10'] as num? ?? 0).toDouble()),
+      no2: math.max(0.0, (json['no2'] as num? ?? 0).toDouble()),
+      o3: math.max(0.0, (json['o3'] as num? ?? 0).toDouble()),
+      grassPollen: math.max(0.0, (json['grassPollen'] as num? ?? 0).toDouble()),
+      treePollen: math.max(0.0, (json['treePollen'] as num? ?? 0).toDouble()),
+      weedPollen: math.max(0.0, (json['weedPollen'] as num? ?? 0).toDouble()),
+      uvIndex: (json['uvIndex'] as num? ?? 0).toDouble().clamp(0.0, 25.0),
     );
   }
 }

@@ -4,6 +4,7 @@ import '../../core/constants/api_endpoints.dart';
 import '../models/weather_model.dart';
 import '../models/air_quality_model.dart';
 import '../models/marine_model.dart';
+import '../../core/errors/weather_exceptions.dart';
 
 class OpenMeteoService {
   final Dio _dio;
@@ -91,29 +92,7 @@ class OpenMeteoService {
       _cache[cacheKey] = (DateTime.now(), model);
       return model;
     } catch (e) {
-      // Return realistic mock fallback if network error
-      final mock = WeatherModel.mock();
-      if (cityName != null) {
-        return WeatherModel(
-          cityName: cityName,
-          latitude: latitude,
-          longitude: longitude,
-          currentTemp: mock.currentTemp,
-          feelsLike: mock.feelsLike,
-          humidity: mock.humidity,
-          windSpeed: mock.windSpeed,
-          windDirection: mock.windDirection,
-          weatherCode: mock.weatherCode,
-          precipitation: mock.precipitation,
-          precipitationProbability: mock.precipitationProbability,
-          visibility: mock.visibility,
-          uvIndex: mock.uvIndex,
-          dewPoint: mock.dewPoint,
-          hourly: mock.hourly,
-          daily: mock.daily,
-        );
-      }
-      return mock;
+      _handleError(e);
     }
   }
 
@@ -152,7 +131,7 @@ class OpenMeteoService {
       _cache[cacheKey] = (DateTime.now(), model);
       return model;
     } catch (e) {
-      return AirQualityModel.mock();
+      _handleError(e);
     }
   }
 
@@ -188,7 +167,7 @@ class OpenMeteoService {
       _cache[cacheKey] = (DateTime.now(), model);
       return model;
     } catch (e) {
-      return MarineModel.mock();
+      _handleError(e);
     }
   }
 
@@ -254,24 +233,49 @@ class OpenMeteoService {
       _cache[cacheKey] = (DateTime.now(), list);
       return list;
     } catch (e) {
-      final daysCount = endDate.difference(startDate).inDays + 1;
-      return List.generate(daysCount, (i) {
-        final d = startDate.add(Duration(days: i));
-        return DailyWeather(
-          date: d,
-          tempMin: 18.0 + (i % 4),
-          tempMax: 29.0 + (i % 5),
-          precipitationSum: (i % 5 == 0) ? 4.0 : 0.0,
-          precipitationProbabilityMax: (i % 5 == 0) ? 60 : 10,
-          windSpeedMax: 14.0 + (i % 3),
-          weatherCode: (i % 5 == 0) ? 61 : 1,
-          sunrise: DateTime(d.year, d.month, d.day, 6, 0),
-          sunset: DateTime(d.year, d.month, d.day, 18, 0),
-          uvIndexMax: 6.0,
-          et0FaoEvapotranspiration: 4.0,
-          soilMoisture: 30.0,
-        );
-      });
+      _handleError(e);
     }
+  }
+
+  Never _handleError(dynamic error) {
+    if (error is DioException) {
+      switch (error.type) {
+        case DioExceptionType.connectionTimeout:
+        case DioExceptionType.sendTimeout:
+        case DioExceptionType.receiveTimeout:
+        case DioExceptionType.connectionError:
+          throw NetworkError(
+            message: 'Weather service connection timed out. Please check network connectivity.',
+            technicalDetails: error.toString(),
+          );
+        case DioExceptionType.badResponse:
+          final code = error.response?.statusCode ?? 500;
+          if (code == 429) {
+            throw RateLimitError(
+              message: 'Rate limit reached on Open-Meteo. Please wait a moment.',
+              technicalDetails: error.toString(),
+            );
+          }
+          throw WeatherAPIError(
+            statusCode: code,
+            message: 'Weather API returned HTTP status $code.',
+            technicalDetails: error.toString(),
+          );
+        case DioExceptionType.cancel:
+          throw const NetworkError(message: 'Weather request was cancelled.');
+        default:
+          throw NetworkError(
+            message: 'Network communication failure: ${error.message}',
+            technicalDetails: error.toString(),
+          );
+      }
+    }
+    if (error is WeatherAppException) {
+      throw error;
+    }
+    throw WeatherAPIError(
+      message: 'Failed to process meteorological data: $error',
+      technicalDetails: error.toString(),
+    );
   }
 }
