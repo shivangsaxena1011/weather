@@ -103,6 +103,54 @@ class SavedCitiesNotifier extends StateNotifier<List<LocationModel>> {
     final storage = _ref.read(storageServiceProvider);
     await storage.saveSavedCities(updated);
   }
+
+  Future<void> renameCity(String cityName, String newName) async {
+    final updated = state.map((c) {
+      if (c.cityName == cityName) {
+        return c.copyWith(customName: newName);
+      }
+      return c;
+    }).toList();
+    state = updated;
+    final storage = _ref.read(storageServiceProvider);
+    await storage.saveSavedCities(updated);
+  }
+
+  Future<void> setTag(String cityName, String tag) async {
+    final updated = state.map((c) {
+      if (c.cityName == cityName) {
+        return c.copyWith(tag: tag);
+      }
+      return c;
+    }).toList();
+    state = updated;
+    final storage = _ref.read(storageServiceProvider);
+    await storage.saveSavedCities(updated);
+  }
+
+  Future<void> toggleFavorite(String cityName) async {
+    final updated = state.map((c) {
+      if (c.cityName == cityName) {
+        return c.copyWith(isFavorite: !c.isFavorite);
+      }
+      return c;
+    }).toList();
+    state = updated;
+    final storage = _ref.read(storageServiceProvider);
+    await storage.saveSavedCities(updated);
+  }
+
+  Future<void> reorder(int oldIndex, int newIndex) async {
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+    final items = List<LocationModel>.from(state);
+    final item = items.removeAt(oldIndex);
+    items.insert(newIndex, item);
+    state = items;
+    final storage = _ref.read(storageServiceProvider);
+    await storage.saveSavedCities(items);
+  }
 }
 
 final savedCitiesProvider =

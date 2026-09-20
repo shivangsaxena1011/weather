@@ -44,6 +44,8 @@ class HourlyWeather {
       visibility: (json['visibility'] as num? ?? 10000).toDouble(),
       uvIndex: (json['uv_index'] as num? ?? 0).toDouble(),
     );
+  }
+
   Map<String, dynamic> toJson() => {
         'time': time.toIso8601String(),
         'temperature_2m': temperature,

@@ -7,6 +7,7 @@ import '../engines/outfit_recommendation_engine.dart';
 import '../engines/anomaly_detection_engine.dart';
 import 'weather_provider.dart';
 import 'persona_provider.dart';
+import '../data/services/storage_service.dart';
 
 /// Provides the computed Weather Comfort Score (0-100) and factor breakdown.
 final comfortScoreProvider = Provider<ComfortScoreResult?>((ref) {
@@ -77,4 +78,42 @@ final weatherAnomalyProvider = Provider<List<WeatherAnomaly>>((ref) {
   if (bundle == null) return [];
 
   return WeatherAnomalyDetector.detect(bundle.weather);
+});
+
+/// Manages user smart alert notification preferences.
+class AlertPreferencesNotifier extends StateNotifier<Map<String, bool>> {
+  final StorageService _storage;
+
+  AlertPreferencesNotifier(this._storage)
+      : super(const {
+          'rain': true,
+          'heavyRain': true,
+          'storm': true,
+          'extremeHeat': true,
+          'extremeCold': true,
+          'uv': true,
+          'aqi': true,
+          'wind': false,
+          'fog': true,
+        }) {
+    _init();
+  }
+
+  Future<void> _init() async {
+    final loaded = await _storage.loadAlertPreferences();
+    state = loaded;
+  }
+
+  Future<void> togglePreference(String key) async {
+    final current = state[key] ?? true;
+    final updated = Map<String, bool>.from(state)..[key] = !current;
+    state = updated;
+    await _storage.saveAlertPreferences(updated);
+  }
+}
+
+final alertPreferencesProvider =
+    StateNotifierProvider<AlertPreferencesNotifier, Map<String, bool>>((ref) {
+  final storage = ref.watch(storageServiceProvider);
+  return AlertPreferencesNotifier(storage);
 });

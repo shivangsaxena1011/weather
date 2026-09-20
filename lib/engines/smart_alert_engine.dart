@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import '../data/models/weather_model.dart';
 import '../data/models/air_quality_model.dart';
 import '../widgets/common/alert_banner.dart';

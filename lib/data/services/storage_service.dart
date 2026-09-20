@@ -208,4 +208,9 @@ class StorageService {
       };
     }
   }
+
+  Future<void> clearCache() async {
+    final prefs = await _prefs;
+    await prefs.remove(_keyCachedBundle);
+  }
 }

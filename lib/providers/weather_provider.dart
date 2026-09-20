@@ -95,7 +95,7 @@ final weatherRepositoryProvider = Provider<WeatherRepository>((ref) {
 final weatherDataProvider =
     FutureProvider.autoDispose<MausamDataBundle>((ref) async {
   // Keep alive to prevent aggressive re-fetching on tab/screen switch
-  final link = ref.keepAlive();
+  ref.keepAlive();
 
   final locationAsync = ref.watch(locationProvider);
   final repo = ref.watch(weatherRepositoryProvider);

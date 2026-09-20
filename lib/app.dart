@@ -9,6 +9,11 @@ import 'screens/onboarding/persona_picker_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/forecast/forecast_screen.dart';
 import 'screens/settings/settings_screen.dart';
+import 'screens/locations/locations_screen.dart';
+import 'screens/map/map_screen.dart';
+import 'screens/assistant/assistant_screen.dart';
+import 'screens/travel/travel_screen.dart';
+import 'screens/analytics/analytics_screen.dart';
 
 // ---------------------------------------------------------------------------
 // Router
@@ -43,6 +48,26 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings',
         builder: (_, __) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: '/locations',
+        builder: (_, __) => const LocationsScreen(),
+      ),
+      GoRoute(
+        path: '/map',
+        builder: (_, __) => const WeatherMapScreen(),
+      ),
+      GoRoute(
+        path: '/assistant',
+        builder: (_, __) => const AssistantScreen(),
+      ),
+      GoRoute(
+        path: '/travel',
+        builder: (_, __) => const TravelScreen(),
+      ),
+      GoRoute(
+        path: '/analytics',
+        builder: (_, __) => const AnalyticsScreen(),
       ),
     ],
   );
