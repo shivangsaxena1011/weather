@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/api_endpoints.dart';
 import '../models/weather_model.dart';
@@ -8,11 +9,12 @@ import '../../core/errors/weather_exceptions.dart';
 
 class OpenMeteoService {
   final Dio _dio;
-  static const Duration _cacheTtl = Duration(minutes: 15);
+  final String? _apiKey;
+  static const Duration _cacheTtl = Duration(minutes: 5);
 
   final Map<String, (DateTime, dynamic)> _cache = {};
 
-  OpenMeteoService({Dio? dio})
+  OpenMeteoService({Dio? dio, String? apiKey})
       : _dio = dio ??
             Dio(
               BaseOptions(
@@ -22,24 +24,33 @@ class OpenMeteoService {
                   'User-Agent': 'MausamApp/1.0',
                 },
               ),
-            );
+            ),
+        _apiKey = apiKey ?? (dotenv.isInitialized ? dotenv.env['OPEN_METEO_API_KEY'] : null);
+
+  Map<String, dynamic> _withApiKey(Map<String, dynamic> params) {
+    if (_apiKey != null && _apiKey!.trim().isNotEmpty) {
+      params['apikey'] = _apiKey!.trim();
+    }
+    return params;
+  }
 
   /// Fetches 7-day comprehensive weather, hourly, daily, UV, soil moisture, etc.
   Future<WeatherModel> fetchWeather({
     required double latitude,
     required double longitude,
     String? cityName,
+    bool forceRefresh = false,
   }) async {
     final cacheKey = 'weather_${latitude.toStringAsFixed(2)}_${longitude.toStringAsFixed(2)}';
     final cached = _cache[cacheKey];
-    if (cached != null && DateTime.now().difference(cached.$1) < _cacheTtl) {
+    if (!forceRefresh && cached != null && DateTime.now().difference(cached.$1) < _cacheTtl) {
       return cached.$2 as WeatherModel;
     }
 
     try {
       final response = await _dio.get(
         ApiEndpoints.weatherBase,
-        queryParameters: {
+        queryParameters: _withApiKey({
           'latitude': latitude,
           'longitude': longitude,
           'current': [
@@ -81,7 +92,7 @@ class OpenMeteoService {
           ].join(','),
           'timezone': 'auto',
           'forecast_days': 14,
-        },
+        }),
       );
 
       final data = Map<String, dynamic>.from(response.data as Map);
@@ -100,17 +111,18 @@ class OpenMeteoService {
   Future<AirQualityModel> fetchAirQuality({
     required double latitude,
     required double longitude,
+    bool forceRefresh = false,
   }) async {
     final cacheKey = 'aqi_${latitude.toStringAsFixed(2)}_${longitude.toStringAsFixed(2)}';
     final cached = _cache[cacheKey];
-    if (cached != null && DateTime.now().difference(cached.$1) < _cacheTtl) {
+    if (!forceRefresh && cached != null && DateTime.now().difference(cached.$1) < _cacheTtl) {
       return cached.$2 as AirQualityModel;
     }
 
     try {
       final response = await _dio.get(
         ApiEndpoints.airQualityBase,
-        queryParameters: {
+        queryParameters: _withApiKey({
           'latitude': latitude,
           'longitude': longitude,
           'current': [
@@ -125,7 +137,7 @@ class OpenMeteoService {
             'uv_index',
           ].join(','),
           'timezone': 'auto',
-        },
+        }),
       );
       final model = AirQualityModel.fromJson(Map<String, dynamic>.from(response.data as Map));
       _cache[cacheKey] = (DateTime.now(), model);
@@ -139,17 +151,18 @@ class OpenMeteoService {
   Future<MarineModel> fetchMarine({
     required double latitude,
     required double longitude,
+    bool forceRefresh = false,
   }) async {
     final cacheKey = 'marine_${latitude.toStringAsFixed(2)}_${longitude.toStringAsFixed(2)}';
     final cached = _cache[cacheKey];
-    if (cached != null && DateTime.now().difference(cached.$1) < _cacheTtl) {
+    if (!forceRefresh && cached != null && DateTime.now().difference(cached.$1) < _cacheTtl) {
       return cached.$2 as MarineModel;
     }
 
     try {
       final response = await _dio.get(
         ApiEndpoints.marineBase,
-        queryParameters: {
+        queryParameters: _withApiKey({
           'latitude': latitude,
           'longitude': longitude,
           'current': [
@@ -161,7 +174,7 @@ class OpenMeteoService {
             'sea_surface_temperature',
           ].join(','),
           'timezone': 'auto',
-        },
+        }),
       );
       final model = MarineModel.fromJson(Map<String, dynamic>.from(response.data as Map));
       _cache[cacheKey] = (DateTime.now(), model);

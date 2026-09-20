@@ -12,16 +12,19 @@ abstract class WeatherRepository {
     required double latitude,
     required double longitude,
     String? cityName,
+    bool forceRefresh = false,
   });
 
   Future<AirQualityModel> getAirQuality({
     required double latitude,
     required double longitude,
+    bool forceRefresh = false,
   });
 
   Future<MarineModel> getMarine({
     required double latitude,
     required double longitude,
+    bool forceRefresh = false,
   });
 
   Future<List<DailyWeather>> getHistoricalDailyWeather({
@@ -44,11 +47,13 @@ class OpenMeteoWeatherRepository implements WeatherRepository {
     required double latitude,
     required double longitude,
     String? cityName,
+    bool forceRefresh = false,
   }) {
     return _service.fetchWeather(
       latitude: latitude,
       longitude: longitude,
       cityName: cityName,
+      forceRefresh: forceRefresh,
     );
   }
 
@@ -56,10 +61,12 @@ class OpenMeteoWeatherRepository implements WeatherRepository {
   Future<AirQualityModel> getAirQuality({
     required double latitude,
     required double longitude,
+    bool forceRefresh = false,
   }) {
     return _service.fetchAirQuality(
       latitude: latitude,
       longitude: longitude,
+      forceRefresh: forceRefresh,
     );
   }
 
@@ -67,10 +74,12 @@ class OpenMeteoWeatherRepository implements WeatherRepository {
   Future<MarineModel> getMarine({
     required double latitude,
     required double longitude,
+    bool forceRefresh = false,
   }) {
     return _service.fetchMarine(
       latitude: latitude,
       longitude: longitude,
+      forceRefresh: forceRefresh,
     );
   }
 
